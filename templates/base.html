@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Nature Bit - নার্সারি{% endblock %}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%);
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2e7d32;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .nav-links a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: #2e7d32;
+        }
+        
+        .cart-badge {
+            background: #2e7d32;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 50%;
+            font-size: 0.8rem;
+            margin-left: 0.3rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .flash-messages {
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .footer {
+            background: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .nav-links {
+                justify-content: center;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">🌿 Nature Bit</a>
+            
+            <div class="nav-links">
+                <a href="/">হোম</a>
+                <a href="/plants">গাছ</a>
+                
+                {% if current_user.is_authenticated %}
+                    {% if current_user.is_admin %}
+                        <a href="/admin">এডমিন</a>
+                    {% endif %}
+                    <a href="/cart">কার্ট
+                        {% if cart_count > 0 %}
+                            <span class="cart-badge">{{ cart_count }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="/orders">আমার অর্ডার</a>
+                    <a href="/logout">লগআউট</a>
+                {% else %}
+                    <a href="/login">লগইন</a>
+                    <a href="/register">রেজিস্টার</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+    
+    <footer class="footer">
+        <p>&copy; ২০২৬ Nature Bit নার্সারি। সমস্ত অধিকার সংরক্ষিত।</p>
+    </footer>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

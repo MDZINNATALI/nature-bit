@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}আমার অর্ডার - Nature Bit{% endblock %}
+
+{% block extra_css %}
+<style>
+    .orders-container {
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+        color: #2e7d32;
+        margin-bottom: 30px;
+    }
+    
+    .order-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    
+    .order-header {
+        background: #f8f9fa;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .order-number {
+        font-weight: bold;
+        color: #2e7d32;
+    }
+    
+    .order-date {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .order-status {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-confirmed {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-shipped {
+        background: #cce5ff;
+        color: #004085;
+    }
+    
+    .status-delivered {
+        background: #d1e7dd;
+        color: #0f5132;
+    }
+    
+    .order-body {
+        padding: 20px;
+    }
+    
+    .order-items {
+        margin-bottom: 15px;
+    }
+    
+    .order-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .order-item:last-child {
+        border-bottom: none;
+    }
+    
+    .item-name {
+        color: #333;
+    }
+    
+    .item-quantity {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .item-price {
+        color: #2e7d32;
+        font-weight: bold;
+    }
+    
+    .order-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 2px solid #e0e0e0;
+    }
+    
+    .order-total {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .payment-info {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .btn-details {
+        padding: 8px 20px;
+        background: #4caf50;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background 0.3s;
+    }
+    
+    .btn-details:hover {
+        background: #2e7d32;
+    }
+    
+    .no-orders {
+        text-align: center;
+        padding: 60px;
+        color: #999;
+    }
+    
+    .continue-shopping {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 30px;
+        background: #4caf50;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+    }
+    
+    @media (max-width: 768px) {
+        .order-header {
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
+        
+        .order-footer {
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="orders-container">
+    <h1>📋 আমার অর্ডারসমূহ</h1>
+    
+    {% if orders %}
+        {% for order in orders %}
+        <div class="order-card">
+            <div class="order-header">
+                <div>
+                    <span class="order-number">অর্ডার #{{ order.order_number }}</span>
+                    <span class="order-date">{{ order.created_at.strftime('%d %B, %Y %I:%M %p') }}</span>
+                </div>
+                <span class="order-status status-{{ order.status }}">
+                    {% if order.status == 'pending' %}⏳ পেন্ডিং
+                    {% elif order.status == 'confirmed' %}✅ কনফার্মড
+                    {% elif order.status == 'shipped' %}🚚 শিপড
+                    {% elif order.status == 'delivered' %}📦 ডেলিভারড
+                    {% else %}{{ order.status }}{% endif %}
+                </span>
+            </div>
+            
+            <div class="order-body">
+                <div class="order-items">
+                    {% for item in order.items %}
+                    <div class="order-item">
+                        <div>
+                            <span class="item-name">{{ item.plant_name }}</span>
+                            <span class="item-quantity"> x {{ item.quantity }}</span>
+                        </div>
+                        <span class="item-price">৳{{ "%.2f"|format(item.price * item.quantity) }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="order-footer">
+                    <div>
+                        <div class="payment-info">
+                            💳 {{ order.payment_method }} | 📞 {{ order.delivery_phone }}
+                        </div>
+                        <div class="payment-info">
+                            📦 ডেলিভারি: {{ order.delivery_address }}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="order-total">মোট: ৳{{ "%.2f"|format(order.final_amount) }}</span>
+                        <a href="/order/{{ order.id }}" class="btn-details">বিস্তারিত</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-orders">
+            <h2>📭 কোনো অর্ডার নেই</h2>
+            <p>আপনি এখনও কোনো অর্ডার করেননি</p>
+            <a href="/plants" class="continue-shopping">🌿 গাছ দেখুন</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

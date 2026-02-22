@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}নতুন অফলাইন বিক্রয় - এডমিন{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+        color: #2e7d32;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+        font-weight: 500;
+    }
+    
+    input, select, textarea {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #4caf50;
+    }
+    
+    textarea {
+        height: 100px;
+        resize: vertical;
+    }
+    
+    .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    
+    .items-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 5px;
+        margin: 20px 0;
+    }
+    
+    .item-row {
+        display: grid;
+        grid-template-columns: 3fr 1fr 1fr 0.5fr;
+        gap: 10px;
+        margin-bottom: 10px;
+        align-items: center;
+    }
+    
+    .btn-add-item {
+        background: #4caf50;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    
+    .btn-remove-item {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    
+    .btn-submit {
+        width: 100%;
+        padding: 15px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s;
+        margin-top: 20px;
+    }
+    
+    .btn-submit:hover {
+        background: #2e7d32;
+    }
+    
+    .btn-cancel {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 12px 20px;
+        background: #6c757d;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        text-align: center;
+        width: 100%;
+    }
+    
+    .btn-cancel:hover {
+        background: #5a6268;
+    }
+    
+    .total-display {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #2e7d32;
+        text-align: right;
+        margin-top: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>➕ নতুন অফলাইন বিক্রয় যোগ করুন</h1>
+    
+    <form method="POST" id="saleForm">
+        <div class="row">
+            <div class="form-group">
+                <label>গ্রাহকের নাম *</label>
+                <input type="text" name="customer_name" required placeholder="যেমন: জন DOE">
+            </div>
+            
+            <div class="form-group">
+                <label>ফোন নম্বর *</label>
+                <input type="text" name="customer_phone" required placeholder="০১*********">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>ঠিকানা</label>
+            <textarea name="customer_address" placeholder="গ্রাহকের ঠিকানা (ঐচ্ছিক)"></textarea>
+        </div>
+        
+        <div class="row">
+            <div class="form-group">
+                <label>সোর্স</label>
+                <select name="source">
+                    <option value="facebook">ফেসবুক</option>
+                    <option value="direct">সরাসরি</option>
+                    <option value="referral">রেফারেল</option>
+                    <option value="other">অন্যান্য</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>পেমেন্ট মেথড *</label>
+                <select name="payment_method" required>
+                    <option value="">সিলেক্ট করুন</option>
+                    <option value="cash">নগদ</option>
+                    <option value="bkash">বিকাশ</option>
+                    <option value="nagad">নগদ</option>
+                    <option value="rocket">রকেট</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="form-group">
+                <label>পেমেন্ট নম্বর (ঐচ্ছিক)</label>
+                <input type="text" name="payment_number" placeholder="০১*********">
+            </div>
+            
+            <div class="form-group">
+                <label>ট্রাঞ্জেকশন আইডি (ঐচ্ছিক)</label>
+                <input type="text" name="transaction_id" placeholder="TRX123456">
+            </div>
+        </div>
+        
+        <div class="items-section">
+            <h3>🛒 গাছের তালিকা</h3>
+            <div id="items-container">
+                <div class="item-row">
+                    <select name="plant_id[]" required class="plant-select">
+                        <option value="">গাছ সিলেক্ট করুন</option>
+                        {% for plant in plants %}
+                        <option value="{{ plant.id }}" data-price="{{ plant.price }}">{{ plant.name }} (স্টক: {{ plant.stock }})</option>
+                        {% endfor %}
+                    </select>
+                    <input type="number" name="quantity[]" placeholder="পরিমাণ" min="1" required>
+                    <input type="number" name="price[]" placeholder="দাম" step="0.01" class="price-input">
+                    <button type="button" class="btn-remove-item" onclick="removeItem(this)">❌</button>
+                </div>
+            </div>
+            <button type="button" class="btn-add-item" onclick="addItem()">➕ আরেকটি গাছ যোগ করুন</button>
+        </div>
+        
+        <div class="row">
+            <div class="form-group">
+                <label>ডিসকাউন্ট (ঐচ্ছিক)</label>
+                <input type="number" name="discount" step="0.01" min="0" value="0" id="discount" onchange="calculateTotal()">
+            </div>
+            
+            <div class="form-group">
+                <label>ডেলিভারি চার্জ (ঐচ্ছিক)</label>
+                <input type="number" name="delivery_charge" step="0.01" min="0" value="0" id="delivery" onchange="calculateTotal()">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>নোট (ঐচ্ছিক)</label>
+            <textarea name="notes" placeholder="বিক্রয় সম্পর্কে কোনো নোট"></textarea>
+        </div>
+        
+        <div class="total-display" id="total-display">
+            সর্বমোট: ৳0.00
+        </div>
+        
+        <button type="submit" class="btn-submit">✅ বিক্রয় যোগ করুন</button>
+    </form>
+    
+    <a href="/admin/offline-sales" class="btn-cancel">← বাতিল করুন</a>
+</div>
+
+<script>
+    function addItem() {
+        const container = document.getElementById('items-container');
+        const newRow = document.createElement('div');
+        newRow.className = 'item-row';
+        newRow.innerHTML = `
+            <select name="plant_id[]" required class="plant-select">
+                <option value="">গাছ সিলেক্ট করুন</option>
+                {% for plant in plants %}
+                <option value="{{ plant.id }}" data-price="{{ plant.price }}">{{ plant.name }} (স্টক: {{ plant.stock }})</option>
+                {% endfor %}
+            </select>
+            <input type="number" name="quantity[]" placeholder="পরিমাণ" min="1" required>
+            <input type="number" name="price[]" placeholder="দাম" step="0.01" class="price-input">
+            <button type="button" class="btn-remove-item" onclick="removeItem(this)">❌</button>
+        `;
+        container.appendChild(newRow);
+        
+        // নতুন রো-তে ইভেন্ট লিসেনার যোগ করুন
+        newRow.querySelector('.plant-select').addEventListener('change', function() {
+            updatePrice(this);
+        });
+        newRow.querySelector('input[name="quantity[]"]').addEventListener('change', calculateTotal);
+        newRow.querySelector('.price-input').addEventListener('change', calculateTotal);
+    }
+    
+    function removeItem(btn) {
+        if (document.querySelectorAll('.item-row').length > 1) {
+            btn.closest('.item-row').remove();
+            calculateTotal();
+        } else {
+            alert('কমপক্ষে একটি গাছ থাকতে হবে');
+        }
+    }
+    
+    function updatePrice(select) {
+        const row = select.closest('.item-row');
+        const priceInput = row.querySelector('.price-input');
+        const selectedOption = select.options[select.selectedIndex];
+        const defaultPrice = selectedOption.dataset.price;
+        if (defaultPrice && !priceInput.value) {
+            priceInput.value = defaultPrice;
+        }
+        calculateTotal();
+    }
+    
+    function calculateTotal() {
+        let total = 0;
+        const rows = document.querySelectorAll('.item-row');
+        
+        rows.forEach(row => {
+            const quantity = parseFloat(row.querySelector('input[name="quantity[]"]').value) || 0;
+            const price = parseFloat(row.querySelector('.price-input').value) || 0;
+            total += quantity * price;
+        });
+        
+        const discount = parseFloat(document.getElementById('discount').value) || 0;
+        const delivery = parseFloat(document.getElementById('delivery').value) || 0;
+        
+        const finalTotal = total - discount + delivery;
+        
+        document.getElementById('total-display').innerHTML = `সর্বমোট: ৳${finalTotal.toFixed(2)}`;
+    }
+    
+    // পেজ লোডে ইভেন্ট লিসেনার যোগ করুন
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.plant-select').forEach(select => {
+            select.addEventListener('change', function() {
+                updatePrice(this);
+            });
+        });
+        
+        document.querySelectorAll('input[name="quantity[]"], .price-input').forEach(input => {
+            input.addEventListener('change', calculateTotal);
+        });
+        
+        calculateTotal();
+    });
+</script>
+{% endblock %}

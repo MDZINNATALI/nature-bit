@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}চেকআউট - Nature Bit{% endblock %}
+
+{% block extra_css %}
+<style>
+    .checkout-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+    
+    .order-summary {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .checkout-form {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    h2 {
+        color: #2e7d32;
+        margin-bottom: 20px;
+        font-size: 1.5em;
+    }
+    
+    .order-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .order-item:last-child {
+        border-bottom: none;
+    }
+    
+    .item-name {
+        color: #333;
+    }
+    
+    .item-quantity {
+        color: #666;
+        font-size: 0.9rem;
+        margin-left: 5px;
+    }
+    
+    .item-price {
+        color: #2e7d32;
+        font-weight: bold;
+    }
+    
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .summary-row.total {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #333;
+        border-bottom: none;
+        border-top: 2px solid #e0e0e0;
+        padding-top: 15px;
+        margin-top: 10px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+        font-weight: 500;
+    }
+    
+    input, select, textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #4caf50;
+    }
+    
+    textarea {
+        height: 100px;
+        resize: vertical;
+    }
+    
+    .payment-methods {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .payment-method {
+        text-align: center;
+        padding: 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .payment-method:hover {
+        border-color: #4caf50;
+    }
+    
+    .payment-method.selected {
+        border-color: #4caf50;
+        background: #e8f5e9;
+    }
+    
+    .payment-method input {
+        display: none;
+    }
+    
+    .btn-place-order {
+        width: 100%;
+        padding: 15px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s;
+        margin-top: 20px;
+    }
+    
+    .btn-place-order:hover {
+        background: #2e7d32;
+    }
+    
+    @media (max-width: 768px) {
+        .checkout-container {
+            grid-template-columns: 1fr;
+        }
+        .payment-methods {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+    <div class="order-summary">
+        <h2>📋 অর্ডার সামারি</h2>
+        
+        {% for item in cart_items %}
+        <div class="order-item">
+            <span class="item-name">
+                {{ item.plant.name }}
+                <span class="item-quantity">x{{ item.quantity }}</span>
+            </span>
+            <span class="item-price">৳{{ "%.2f"|format(item.plant.price * item.quantity) }}</span>
+        </div>
+        {% endfor %}
+        
+        <div class="summary-row">
+            <span>সাবটোটাল:</span>
+            <span>৳{{ "%.2f"|format(subtotal) }}</span>
+        </div>
+        <div class="summary-row">
+            <span>ডেলিভারি চার্জ:</span>
+            <span>{% if delivery_charge > 0 %}৳{{ "%.2f"|format(delivery_charge) }}{% else %}ফ্রি{% endif %}</span>
+        </div>
+        <div class="summary-row total">
+            <span>সর্বমোট:</span>
+            <span>৳{{ "%.2f"|format(total) }}</span>
+        </div>
+    </div>
+    
+    <div class="checkout-form">
+        <h2>📦 ডেলিভারি তথ্য</h2>
+        
+        <form method="POST">
+            <div class="form-group">
+                <label>পূর্ণ নাম</label>
+                <input type="text" name="name" value="{{ user.username }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label>ফোন নম্বর</label>
+                <input type="text" name="phone" value="{{ user.phone }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label>ঠিকানা</label>
+                <textarea name="address" placeholder="আপনার সম্পূর্ণ ঠিকানা" required>{{ user.address }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>ডেলিভারি তারিখ (ঐচ্ছিক)</label>
+                <input type="date" name="delivery_date" min="{{ min_date }}" max="{{ max_date }}">
+            </div>
+            
+            <div class="form-group">
+                <label>ডেলিভারি সময় (ঐচ্ছিক)</label>
+                <select name="delivery_time">
+                    <option value="">যেকোনো সময়</option>
+                    <option value="সকাল (৯টা - ১২টা)">সকাল (৯টা - ১২টা)</option>
+                    <option value="বিকাল (২টা - ৫টা)">বিকাল (২টা - ৫টা)</option>
+                    <option value="সন্ধ্যা (৬টা - ৮টা)">সন্ধ্যা (৬টা - ৮টা)</option>
+                </select>
+            </div>
+            
+            <h2 style="margin-top: 20px;">💳 পেমেন্ট মেথড</h2>
+            
+            <div class="payment-methods">
+                <label class="payment-method">
+                    <input type="radio" name="payment_method" value="cash" required>
+                    <span>💵 নগদ</span>
+                </label>
+                <label class="payment-method">
+                    <input type="radio" name="payment_method" value="bkash" required>
+                    <span>📱 বিকাশ</span>
+                </label>
+                <label class="payment-method">
+                    <input type="radio" name="payment_method" value="nagad" required>
+                    <span>💳 নগদ</span>
+                </label>
+                <label class="payment-method">
+                    <input type="radio" name="payment_method" value="rocket" required>
+                    <span>🚀 রকেট</span>
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label>অতিরিক্ত নোট (ঐচ্ছিক)</label>
+                <textarea name="notes" placeholder="কোনো বিশেষ নির্দেশনা থাকলে লিখুন"></textarea>
+            </div>
+            
+            <button type="submit" class="btn-place-order">✅ অর্ডার কনফার্ম করুন</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // পেমেন্ট মেথড সিলেক্ট করার জন্য
+    document.querySelectorAll('.payment-method').forEach(method => {
+        method.addEventListener('click', function() {
+            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+            this.classList.add('selected');
+            this.querySelector('input').checked = true;
+        });
+    });
+</script>
+{% endblock %}
