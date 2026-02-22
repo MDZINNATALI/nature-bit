@@ -1,7 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, send_file
-from flask_bcrypt import Bcrypt
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import db, User, Plant, Cart, Order, OrderItem, OfflineSale, OfflineSaleItem
+from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime, timedelta
 import os
 import random
@@ -13,7 +11,10 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 import time
-import tempfile
+
+# এক্সটেনশন এবং মডেল ইম্পোর্ট
+from extensions import db, bcrypt, login_manager
+from models import User, Plant, Cart, Order, OrderItem, OfflineSale, OfflineSaleItem
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nature-bit-secret-key-2026')
@@ -43,9 +44,10 @@ os.makedirs(REPORT_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['REPORT_FOLDER'] = REPORT_FOLDER
 
+# এক্সটেনশনগুলো app-এর সাথে রেজিস্টার করুন
 db.init_app(app)
-bcrypt = Bcrypt(app)
-login_manager = LoginManager(app)
+bcrypt.init_app(app)
+login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'অর্ডার করতে লগইন করুন'
 

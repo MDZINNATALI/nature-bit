@@ -1,8 +1,6 @@
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
-
-db = SQLAlchemy()
+from extensions import db  # ✅ extensions থেকে db ইম্পোর্ট করুন
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -15,7 +13,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     orders = db.relationship('Order', backref='customer', lazy=True)
-    cart_items = db.relationship('Cart', backref='user', lazy=True)
+    cart_items = db.relationship('Cart', backref='user', lazy=True, cascade='all, delete-orphan')
 
 class Plant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -29,7 +27,6 @@ class Plant(db.Model):
     image = db.Column(db.String(500))
     featured = db.Column(db.Boolean, default=False)
     
-    # গাছের বিশেষ বৈশিষ্ট্য
     light_requirement = db.Column(db.String(100))
     water_requirement = db.Column(db.String(100))
     height = db.Column(db.String(50))
@@ -72,7 +69,7 @@ class Order(db.Model):
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    items = db.relationship('OrderItem', backref='order', lazy=True)
+    items = db.relationship('OrderItem', backref='order', lazy=True, cascade='all, delete-orphan')
 
 class OrderItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -108,7 +105,7 @@ class OfflineSale(db.Model):
     sold_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    items = db.relationship('OfflineSaleItem', backref='sale', lazy=True)
+    items = db.relationship('OfflineSaleItem', backref='sale', lazy=True, cascade='all, delete-orphan')
 
 class OfflineSaleItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
