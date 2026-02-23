@@ -101,6 +101,20 @@ def utility_processor():
 with app.app_context():
     db.create_all()
 
+    # ✅ Vercel এও admin বানাও (না থাকলে)
+    admin_user = User.query.filter_by(username='admin').first()
+    if not admin_user:
+        admin = User(
+            username='admin',
+            email='admin@naturebit.com',
+            password_hash=bcrypt.generate_password_hash('admin123').decode('utf-8'),
+            phone='01700000000',
+            is_admin=True
+        )
+        db.session.add(admin)
+        db.session.commit()
+        print("✅ Admin created: admin / admin123")
+
 # ========== হোম পেজ ==========
 @app.route('/')
 def index():
