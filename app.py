@@ -33,13 +33,16 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nature-bit-secret-key-2
 # -----------------------------
 # ✅ Database (SQLite /tmp)
 # -----------------------------
+# Vercel এনভায়রনমেন্ট চেক
+is_vercel = os.environ.get('VERCEL_ENV') is not None
+
+# ডাটাবেস URI - SQLite ব্যবহার করুন
 if is_vercel:
-    db_url = os.environ.get("DATABASE_URL")
-    if not db_url:
-        raise RuntimeError("DATABASE_URL is not set in Vercel Environment Variables")
-    app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+    # Vercel-এ tmp ফোল্ডারে SQLite
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tmp/nature_bit.db'
 else:
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///nature_bit.db"
+    # লোকালে স্বাভাবিক
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///nature_bit.db'
 
 # -----------------------------
 # ✅ Upload/Report folders
