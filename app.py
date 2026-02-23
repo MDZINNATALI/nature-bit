@@ -16,21 +16,35 @@ import time
 from extensions import db, bcrypt, login_manager
 from models import User, Plant, Cart, Order, OrderItem, OfflineSale, OfflineSaleItem
 
-app = Flask(__name__)
+# -----------------------------
+# ✅ Vercel read-only FS FIX
+# -----------------------------
+# Vercel এনভায়রনমেন্ট চেক
+is_vercel = os.environ.get("VERCEL") == "1" or os.environ.get("VERCEL_ENV") is not None
+
+# ✅ instance_path /tmp এ দাও, না হলে /var/task/instance বানাতে গিয়ে crash করবে
+app = Flask(__name__, instance_path="/tmp/instance")
+os.makedirs(app.instance_path, exist_ok=True)
+
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nature-bit-secret-key-2026')
 
-# Vercel এনভায়রনমেন্ট চেক
-is_vercel = os.environ.get('VERCEL_ENV') is not None
-
-# ডাটাবেস URI
+# -----------------------------
+# ✅ Database (SQLite /tmp)
+# -----------------------------
 if is_vercel:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tmp/nature_bit.db'
+    # ✅ ৪টা slash: sqlite:////tmp/...
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+        "DATABASE_URL",
+        "sqlite:////tmp/nature_bit.db"
+    )
 else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///nature_bit.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///nature_bit.db"
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# ফাইল আপলোড কনফিগারেশন - Vercel-এর জন্য
+# -----------------------------
+# ✅ Upload/Report folders
+# -----------------------------
 if is_vercel:
     UPLOAD_FOLDER = '/tmp/uploads'
     REPORT_FOLDER = '/tmp/reports'
@@ -80,6 +94,12 @@ def cart_count():
 @app.context_processor
 def utility_processor():
     return {'now': datetime.now, 'timedelta': timedelta}
+
+# -----------------------------
+# ✅ (Optional কিন্তু recommended) cold start এ টেবিল বানাবে
+# -----------------------------
+with app.app_context():
+    db.create_all()
 
 # ========== হোম পেজ ==========
 @app.route('/')
@@ -697,60 +717,63 @@ def admin_users():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        
-        if not User.query.filter_by(username='admin').first():
-            admin = User(
-                username='admin',
-                email='admin@naturebit.com',
-                password_hash=bcrypt.generate_password_hash('admin123').decode('utf-8'),
-                phone='01700000000',
-                is_admin=True
-            )
-            db.session.add(admin)
-            db.session.commit()
-            print("✅ এডমিন ইউজার তৈরি হয়েছে: admin / admin123")
-        
-        if Plant.query.count() == 0:
-            plants = [
-                Plant(
-                    name='মনি প্ল্যান্ট',
-                    scientific_name='Epipremnum aureum',
-                    category='ইনডোর',
-                    description='বাতাস বিশুদ্ধকারী, সহজে বাঁচে',
-                    price=350,
-                    old_price=450,
-                    stock=15,
-                    light_requirement='আংশিক ছায়া',
-                    water_requirement='মাঝারি',
-                    height='২-৩ ফুট',
-                    featured=True
-                ),
-                Plant(
-                    name='গোলাপ',
-                    scientific_name='Rosa',
-                    category='ফুল',
-                    description='সুগন্ধি ফুল, বাগানের রানী',
-                    price=250,
-                    stock=10,
-                    light_requirement='পূর্ণ সূর্য',
-                    water_requirement='নিয়মিত',
-                    blooming_season='বসন্ত-শরৎ',
-                    featured=True
-                ),
-                Plant(
-                    name='অ্যালোভেরা',
-                    scientific_name='Aloe vera',
-                    category='ঔষধি',
-                    description='ত্বকের যত্নে, রসে ভরপুর',
-                    price=180,
-                    stock=20,
-                    light_requirement='পূর্ণ সূর্য',
-                    water_requirement='কম',
-                    featured=True
+
+        # ✅ Vercel এ SQLite persistent না, তাই auto-seed না করাই ভাল
+        # লোকাল এ রাখলাম (demo data)
+        if not is_vercel:
+            if not User.query.filter_by(username='admin').first():
+                admin = User(
+                    username='admin',
+                    email='admin@naturebit.com',
+                    password_hash=bcrypt.generate_password_hash('admin123').decode('utf-8'),
+                    phone='01700000000',
+                    is_admin=True
                 )
-            ]
-            db.session.add_all(plants)
-            db.session.commit()
-            print("✅ স্যাম্পল গাছ যোগ হয়েছে")
-    
+                db.session.add(admin)
+                db.session.commit()
+                print("✅ এডমিন ইউজার তৈরি হয়েছে: admin / admin123")
+
+            if Plant.query.count() == 0:
+                plants = [
+                    Plant(
+                        name='মনি প্ল্যান্ট',
+                        scientific_name='Epipremnum aureum',
+                        category='ইনডোর',
+                        description='বাতাস বিশুদ্ধকারী, সহজে বাঁচে',
+                        price=350,
+                        old_price=450,
+                        stock=15,
+                        light_requirement='আংশিক ছায়া',
+                        water_requirement='মাঝারি',
+                        height='২-৩ ফুট',
+                        featured=True
+                    ),
+                    Plant(
+                        name='গোলাপ',
+                        scientific_name='Rosa',
+                        category='ফুল',
+                        description='সুগন্ধি ফুল, বাগানের রানী',
+                        price=250,
+                        stock=10,
+                        light_requirement='পূর্ণ সূর্য',
+                        water_requirement='নিয়মিত',
+                        blooming_season='বসন্ত-শরৎ',
+                        featured=True
+                    ),
+                    Plant(
+                        name='অ্যালোভেরা',
+                        scientific_name='Aloe vera',
+                        category='ঔষধি',
+                        description='ত্বকের যত্নে, রসে ভরপুর',
+                        price=180,
+                        stock=20,
+                        light_requirement='পূর্ণ সূর্য',
+                        water_requirement='কম',
+                        featured=True
+                    )
+                ]
+                db.session.add_all(plants)
+                db.session.commit()
+                print("✅ স্যাম্পল গাছ যোগ হয়েছে")
+
     app.run(debug=True)

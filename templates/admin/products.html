@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}গাছের তালিকা - এডমিন{% endblock %}
+
+{% block extra_css %}
+<style>
+    .products-header {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .products-header h1 {
+        color: #2e7d32;
+    }
+    
+    .btn-add {
+        background: #4caf50;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: bold;
+        transition: background 0.3s;
+    }
+    
+    .btn-add:hover {
+        background: #2e7d32;
+    }
+    
+    .products-table {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        overflow-x: auto;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    th {
+        background: #4caf50;
+        color: white;
+        padding: 12px;
+        text-align: left;
+    }
+    
+    td {
+        padding: 12px;
+        border-bottom: 1px solid #e0e0e0;
+        vertical-align: middle;
+    }
+    
+    .product-image {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+    
+    .stock-badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+    }
+    
+    .in-stock {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .low-stock {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .out-stock {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .featured-badge {
+        color: #ffc107;
+        font-size: 1.2rem;
+    }
+    
+    .action-btns {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .btn-edit {
+        background: #4caf50;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 0.85rem;
+    }
+    
+    .btn-edit:hover {
+        background: #2e7d32;
+    }
+    
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 0.85rem;
+    }
+    
+    .btn-delete:hover {
+        background: #c82333;
+    }
+    
+    @media (max-width: 768px) {
+        .products-header {
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+        }
+        
+        .action-btns {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="products-header">
+    <h1>🌿 গাছের তালিকা</h1>
+    <a href="/admin/plants/add" class="btn-add">➕ নতুন গাছ যোগ করুন</a>
+</div>
+
+<div class="products-table">
+    <table>
+        <thead>
+            <tr>
+                <th>ছবি</th>
+                <th>আইডি</th>
+                <th>নাম</th>
+                <th>ক্যাটাগরি</th>
+                <th>মূল্য</th>
+                <th>স্টক</th>
+                <th>ফিচার্ড</th>
+                <th>অ্যাকশন</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for plant in plants %}
+            <tr>
+                <td>
+                    {% if plant.image %}
+                        <img src="{{ url_for('static', filename='uploads/' + plant.image) }}" 
+                             class="product-image" alt="{{ plant.name }}">
+                    {% else %}
+                        <div style="width:50px; height:50px; background:#f0f0f0; border-radius:5px; display:flex; align-items:center; justify-content:center;">
+                            🌿
+                        </div>
+                    {% endif %}
+                </td>
+                <td>{{ plant.id }}</td>
+                <td><strong>{{ plant.name }}</strong></td>
+                <td>{{ plant.category }}</td>
+                <td>৳{{ "%.2f"|format(plant.price) }}</td>
+                <td>
+                    {% if plant.stock > 10 %}
+                        <span class="stock-badge in-stock">{{ plant.stock }}</span>
+                    {% elif plant.stock > 0 %}
+                        <span class="stock-badge low-stock">{{ plant.stock }}</span>
+                    {% else %}
+                        <span class="stock-badge out-stock">স্টক শেষ</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if plant.featured %}
+                        <span class="featured-badge">⭐</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="action-btns">
+                        <a href="/admin/plants/edit/{{ plant.id }}" class="btn-edit">✏️ এডিট</a>
+                        <a href="/admin/plants/delete/{{ plant.id }}" class="btn-delete" 
+                           onclick="return confirm('গাছটি ডিলিট করবেন?')">🗑️ ডিলিট</a>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 30px;">
+                    কোনো গাছ নেই
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

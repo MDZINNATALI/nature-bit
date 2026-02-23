@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}গাছ এডিট করুন - এডমিন{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+        color: #2e7d32;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+        font-weight: 500;
+    }
+    
+    input, select, textarea {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #4caf50;
+    }
+    
+    textarea {
+        height: 100px;
+        resize: vertical;
+    }
+    
+    .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    
+    .current-image {
+        margin: 15px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 5px;
+        text-align: center;
+    }
+    
+    .current-image img {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .checkbox-group input {
+        width: auto;
+    }
+    
+    .btn-submit {
+        width: 100%;
+        padding: 15px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s;
+        margin-top: 20px;
+    }
+    
+    .btn-submit:hover {
+        background: #2e7d32;
+    }
+    
+    .btn-cancel {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 12px 20px;
+        background: #6c757d;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        text-align: center;
+        width: 100%;
+    }
+    
+    .btn-cancel:hover {
+        background: #5a6268;
+    }
+    
+    .help-text {
+        font-size: 0.85rem;
+        color: #999;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>✏️ গাছ এডিট করুন</h1>
+    
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>গাছের নাম *</label>
+            <input type="text" name="name" value="{{ plant.name }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label>বৈজ্ঞানিক নাম</label>
+            <input type="text" name="scientific_name" value="{{ plant.scientific_name or '' }}">
+        </div>
+        
+        <div class="row">
+            <div class="form-group">
+                <label>ক্যাটাগরি *</label>
+                <select name="category" required>
+                    <option value="">সিলেক্ট করুন</option>
+                    <option value="ইনডোর" {% if plant.category == 'ইনডোর' %}selected{% endif %}>ইনডোর</option>
+                    <option value="আউটডোর" {% if plant.category == 'আউটডোর' %}selected{% endif %}>আউটডোর</option>
+                    <option value="ফুল" {% if plant.category == 'ফুল' %}selected{% endif %}>ফুল</option>
+                    <option value="ফল" {% if plant.category == 'ফল' %}selected{% endif %}>ফল</option>
+                    <option value="ঔষধি" {% if plant.category == 'ঔষধি' %}selected{% endif %}>ঔষধি</option>
+                    <option value="সুকুলেন্ট" {% if plant.category == 'সুকুলেন্ট' %}selected{% endif %}>সুকুলেন্ট</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>মূল্য (৳) *</label>
+                <input type="number" name="price" step="0.01" value="{{ plant.price }}" required>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="form-group">
+                <label>পুরনো মূল্য</label>
+                <input type="number" name="old_price" step="0.01" value="{{ plant.old_price or 0 }}">
+            </div>
+            
+            <div class="form-group">
+                <label>স্টক পরিমাণ *</label>
+                <input type="number" name="stock" value="{{ plant.stock }}" required>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>বিবরণ *</label>
+            <textarea name="description" required>{{ plant.description }}</textarea>
+        </div>
+        
+        <div class="row">
+            <div class="form-group">
+                <label>আলোর প্রয়োজনীয়তা</label>
+                <input type="text" name="light_requirement" value="{{ plant.light_requirement or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label>পানির প্রয়োজনীয়তা</label>
+                <input type="text" name="water_requirement" value="{{ plant.water_requirement or '' }}">
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="form-group">
+                <label>উচ্চতা</label>
+                <input type="text" name="height" value="{{ plant.height or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label>টবের সাইজ</label>
+                <input type="text" name="pot_size" value="{{ plant.pot_size or '' }}">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>ফুল ফোটার সময়</label>
+            <input type="text" name="blooming_season" value="{{ plant.blooming_season or '' }}">
+        </div>
+        
+        {% if plant.image %}
+        <div class="current-image">
+            <p>বর্তমান ছবি:</p>
+            <img src="{{ url_for('static', filename='uploads/' + plant.image) }}" alt="{{ plant.name }}">
+        </div>
+        {% endif %}
+        
+        <div class="form-group">
+            <label>নতুন ছবি (ঐচ্ছিক)</label>
+            <input type="file" name="image" accept="image/*">
+            <div class="help-text">নতুন ছবি দিতে চাইলে সিলেক্ট করুন</div>
+        </div>
+        
+        <div class="form-group checkbox-group">
+            <input type="checkbox" name="featured" id="featured" {% if plant.featured %}checked{% endif %}>
+            <label for="featured">হোম পেজে ফিচার্ড হিসেবে দেখান</label>
+        </div>
+        
+        <button type="submit" class="btn-submit">✅ আপডেট করুন</button>
+    </form>
+    
+    <a href="/admin/plants" class="btn-cancel">← বাতিল করুন</a>
+</div>
+{% endblock %}
