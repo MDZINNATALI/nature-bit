@@ -12,11 +12,10 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 import time
 from werkzeug.utils import secure_filename
-from models import ContactMessage  # ফাইলের শুরুতে যোগ করুন
 
 # এক্সটেনশন এবং মডেল ইম্পোর্ট
 from extensions import db, bcrypt, login_manager
-from models import User, Plant, Cart, Order, OrderItem, OfflineSale, OfflineSaleItem
+from models import User, Plant, Cart, Order, OrderItem, OfflineSale, OfflineSaleItem, ContactMessage
 
 # -----------------------------
 # ✅ Vercel read-only FS FIX
@@ -33,9 +32,6 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nature-bit-secret-key-2
 # -----------------------------
 # ✅ Database (SQLite /tmp)
 # -----------------------------
-# Vercel এনভায়রনমেন্ট চেক
-is_vercel = os.environ.get('VERCEL_ENV') is not None
-
 # ডাটাবেস URI - SQLite ব্যবহার করুন
 if is_vercel:
     # Vercel-এ tmp ফোল্ডারে SQLite
@@ -43,6 +39,8 @@ if is_vercel:
 else:
     # লোকালে স্বাভাবিক
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///nature_bit.db'
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # -----------------------------
 # ✅ Upload/Report folders
@@ -770,8 +768,7 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
 
-        # ✅ Vercel এ SQLite persistent না, তাই auto-seed না করাই ভাল
-        # লোকাল এ রাখলাম (demo data)
+        # লোকাল এ seed data (শুধু লোকালে)
         if not is_vercel:
             if not User.query.filter_by(username='admin').first():
                 admin = User(
