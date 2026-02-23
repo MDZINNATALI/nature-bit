@@ -418,36 +418,42 @@ def add_plant():
         return redirect(url_for('index'))
     
     if request.method == 'POST':
-        image = request.files.get('image')  # ✅ safe
-        filename = save_plant_image(image) if image else None
+        print("📝 ফর্ম সাবমিট হয়েছে!")  # ডিবাগ লাইন
+        print(f"নাম: {request.form.get('name')}")
+        print(f"মূল্য: {request.form.get('price')}")
         
-        plant = Plant(
-            name=request.form['name'],
-            scientific_name=request.form.get('scientific_name', ''),
-            category=request.form['category'],
-            description=request.form['description'],
-            price=float(request.form['price']),
-            old_price=float(request.form.get('old_price', 0)),
-            stock=int(request.form['stock']),
-            image=filename,
-            featured='featured' in request.form,
-            light_requirement=request.form.get('light_requirement', ''),
-            water_requirement=request.form.get('water_requirement', ''),
-            height=request.form.get('height', ''),
-            pot_size=request.form.get('pot_size', ''),
-            blooming_season=request.form.get('blooming_season', '')
-        )
         try:
+            image = request.files['image']
+            filename = save_plant_image(image) if image else None
+            
+            plant = Plant(
+                name=request.form['name'],
+                scientific_name=request.form.get('scientific_name', ''),
+                category=request.form['category'],
+                description=request.form['description'],
+                price=float(request.form['price']),
+                old_price=float(request.form.get('old_price', 0)),
+                stock=int(request.form['stock']),
+                image=filename,
+                featured='featured' in request.form,
+                light_requirement=request.form.get('light_requirement', ''),
+                water_requirement=request.form.get('water_requirement', ''),
+                height=request.form.get('height', ''),
+                pot_size=request.form.get('pot_size', ''),
+                blooming_season=request.form.get('blooming_season', '')
+            )
+            
             db.session.add(plant)
             db.session.commit()
             flash('গাছ যোগ হয়েছে')
+            return redirect(url_for('admin_plants'))
             
         except Exception as e:
-            db.session.rollback()
-            print("add_plant error:", str(e))
-            flash('কিছু সমস্যা হয়েছে, আবার চেষ্টা করুন')
+            print(f"❌ Error: {e}")
+            flash('গাছ যোগ করতে সমস্যা হয়েছে')
+            return redirect(url_for('add_plant'))
     
-        return render_template('admin/add_product.html')
+    return render_template('admin/add_product.html')
 
 @app.route('/admin/plants/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
