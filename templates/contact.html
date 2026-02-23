@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}যোগাযোগ - Nature Bit{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contact-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin: 40px 0;
+    }
+    
+    .contact-info {
+        background: white;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .contact-form {
+        background: white;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+        color: #2e7d32;
+        margin-bottom: 30px;
+        text-align: center;
+        font-size: 2.2em;
+    }
+    
+    h2 {
+        color: #2e7d32;
+        margin-bottom: 20px;
+        font-size: 1.5em;
+    }
+    
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 25px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        transition: transform 0.3s;
+    }
+    
+    .info-item:hover {
+        transform: translateX(5px);
+        background: #e8f5e9;
+    }
+    
+    .info-icon {
+        font-size: 2rem;
+        min-width: 50px;
+        text-align: center;
+    }
+    
+    .info-content h3 {
+        color: #333;
+        margin-bottom: 5px;
+        font-size: 1.1rem;
+    }
+    
+    .info-content p {
+        color: #666;
+        line-height: 1.5;
+    }
+    
+    .map-container {
+        margin-top: 30px;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .map-container iframe {
+        width: 100%;
+        height: 250px;
+        border: none;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+        font-weight: 500;
+    }
+    
+    input, textarea, select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+    }
+    
+    input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: #4caf50;
+    }
+    
+    textarea {
+        height: 120px;
+        resize: vertical;
+    }
+    
+    .btn-submit {
+        width: 100%;
+        padding: 14px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    
+    .btn-submit:hover {
+        background: #2e7d32;
+    }
+    
+    .social-links {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        justify-content: center;
+    }
+    
+    .social-link {
+        display: inline-block;
+        padding: 12px 25px;
+        background: #f8f9fa;
+        color: #333;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: all 0.3s;
+        font-weight: 500;
+    }
+    
+    .social-link:hover {
+        background: #4caf50;
+        color: white;
+        transform: translateY(-3px);
+    }
+    
+    .social-link.facebook:hover {
+        background: #1877f2;
+    }
+    
+    .social-link.messenger:hover {
+        background: #0084ff;
+    }
+    
+    .social-link.whatsapp:hover {
+        background: #25d366;
+    }
+    
+    .business-hours {
+        margin-top: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .business-hours h3 {
+        color: #2e7d32;
+        margin-bottom: 15px;
+    }
+    
+    .hours-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px dashed #e0e0e0;
+    }
+    
+    .hours-item:last-child {
+        border-bottom: none;
+    }
+    
+    .day {
+        color: #333;
+        font-weight: 500;
+    }
+    
+    .time {
+        color: #666;
+    }
+    
+    @media (max-width: 768px) {
+        .contact-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .social-links {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>📞 আমাদের সাথে যোগাযোগ করুন</h1>
+
+<div class="contact-container">
+    <div class="contact-info">
+        <h2>📍 আমাদের ঠিকানা</h2>
+        
+        <div class="info-item">
+            <div class="info-icon">🏢</div>
+            <div class="info-content">
+                <h3>প্রধান কার্যালয়</h3>
+                <p>Rajshai Sadar
+                    <br>Rajshahi</p>
+            </div>
+        </div>
+        
+        <div class="info-item">
+            <div class="info-icon">📞</div>
+            <div class="info-content">
+                <h3>ফোন নম্বর</h3>
+                <p>01760638656
+                    <br>(হোয়াটসঅ্যাপ)</p>
+            </div>
+        </div>
+        
+        <div class="info-item">
+            <div class="info-icon">✉️</div>
+            <div class="info-content">
+                <h3>ইমেইল</h3>
+                <p>zinnatali356@gmail.com<br>support@nature_bit.com</p>
+            </div>
+        </div>
+        
+        <div class="info-item">
+            <div class="info-icon">🌐</div>
+            <div class="info-content">
+                <h3>সামাজিক যোগাযোগ</h3>
+                <p>Facebook: /naturebit.nursery<br>Instagram: @naturebit_bd</p>
+            </div>
+        </div>
+        
+        <div class="business-hours">
+            <h3>⏰ ব্যবসায়িক সময়</h3>
+            <div class="hours-item">
+                <span class="day">শনিবার - বৃহস্পতিবার</span>
+                <span class="time">সকাল ৯টা - রাত ৮টা</span>
+            </div>
+            <div class="hours-item">
+                <span class="day">শুক্রবার</span>
+                <span class="time">বিকাল ৩টা - রাত ৮টা</span>
+            </div>
+            <div class="hours-item">
+                <span class="day">সাপ্তাহিক ছুটি</span>
+                <span class="time">শুক্রবার সকাল</span>
+            </div>
+        </div>
+        
+        <div class="map-container">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3650.8355!2d90.4125!3d23.7925!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755c7f5e5e5e5e5%3A0x5e5e5e5e5e5e5e5e!2sDhaka!5e0!3m2!1sen!2sbd!4v1234567890" allowfullscreen loading="lazy"></iframe>
+        </div>
+    </div>
+    
+    <div class="contact-form">
+        <h2>📝 আপনার বার্তা পাঠান</h2>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {% if category == 'success' %}success{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" action="{{ url_for('contact') }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>আপনার নাম *</label>
+                    <input type="text" name="name" required placeholder="যেমন: জন ডো">
+                </div>
+                
+                <div class="form-group">
+                    <label>ইমেইল *</label>
+                    <input type="email" name="email" required placeholder="you@example.com">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>ফোন নম্বর</label>
+                    <input type="text" name="phone" placeholder="০১*********">
+                </div>
+                
+                <div class="form-group">
+                    <label>বিষয় *</label>
+                    <select name="subject" required>
+                        <option value="">সিলেক্ট করুন</option>
+                        <option value="পণ্য সম্পর্কে">পণ্য সম্পর্কে</option>
+                        <option value="অর্ডার সম্পর্কে">অর্ডার সম্পর্কে</option>
+                        <option value="ডেলিভারি">ডেলিভারি</option>
+                        <option value="পাইকারি ক্রয়">পাইকারি ক্রয়</option>
+                        <option value="অন্যান্য">অন্যান্য</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>বার্তা *</label>
+                <textarea name="message" required placeholder="আপনার বার্তা লিখুন..."></textarea>
+            </div>
+            
+            <button type="submit" class="btn-submit">📨 বার্তা পাঠান</button>
+        </form>
+        
+        <div class="social-links">
+            <a href="#" class="social-link facebook">📘 Facebook</a>
+            <a href="#" class="social-link messenger">💬 Messenger</a>
+            <a href="#" class="social-link whatsapp">📱 WhatsApp</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -12,6 +12,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 import time
 from werkzeug.utils import secure_filename
+from models import ContactMessage  # ফাইলের শুরুতে যোগ করুন
 
 # এক্সটেনশন এবং মডেল ইম্পোর্ট
 from extensions import db, bcrypt, login_manager
@@ -745,6 +746,24 @@ def admin_users():
     
     users = User.query.order_by(User.created_at.desc()).all()
     return render_template('admin/users.html', users=users)
+
+# ========== Contact Us ==========
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        contact_msg = ContactMessage(
+            name=request.form['name'],
+            email=request.form['email'],
+            phone=request.form.get('phone', ''),
+            subject=request.form['subject'],
+            message=request.form['message']
+        )
+        db.session.add(contact_msg)
+        db.session.commit()
+        flash('আপনার বার্তা পাঠানো হয়েছে!', 'success')
+        return redirect(url_for('contact'))
+    
+    return render_template('contact.html')
 
 # ========== মেইন ==========
 if __name__ == '__main__':
