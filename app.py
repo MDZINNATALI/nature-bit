@@ -13,51 +13,41 @@ from reportlab.lib.units import inch
 import time
 from werkzeug.utils import secure_filename
 import secrets
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin
-from flask_bcrypt import Bcrypt
 from extensions import db, bcrypt, login_manager
 from models import User, Plant, Cart, Order, OrderItem, OfflineSale, OfflineSaleItem, ContactMessage
 
 app = Flask(__name__)
-# ✅ SECRET_KEY must (flash/session/login এর জন্য)
+
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", secrets.token_hex(32))
 
-# ✅ Detect Vercel
 is_vercel = (os.getenv("VERCEL") is not None) or (os.getenv("VERCEL_ENV") is not None)
 
-# ✅ Database config
-# ---------------------------
 if is_vercel:
     db_url = os.environ.get("DATABASE_URL")
-
-    # ✅ যদি Postgres না থাকে → SQLite fallback (/tmp only)
     if not db_url:
-        os.makedirs("/tmp", exist_ok=True)  # ✅ এখানে দরকার
+        os.makedirs("/tmp", exist_ok=True)
         db_url = "sqlite:////tmp/nature_bit.db"
 
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
 
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+    app.config["UPLOAD_FOLDER"] = "/tmp/uploads"
 else:
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///nature_bit.db"
+    app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads")
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-# ---------------------------
-# ✅ Init extensions (সবচেয়ে important)
-# ---------------------------
 db.init_app(app)
 bcrypt.init_app(app)
 login_manager.init_app(app)
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# ---------------------------
-# ✅ Create tables (app_context এর ভিতর)
-# ---------------------------
 with app.app_context():
     db.create_all()
 
