@@ -51,20 +51,19 @@ def load_user(user_id):
 with app.app_context():
     db.create_all()
 
-    # ✅ Optional: admin auto-create (LOCAL এ রাখাই ভালো)
-    if not is_vercel:
-        admin_user = User.query.filter_by(username="admin").first()
-        if not admin_user:
-            admin = User(
-                username="admin",
-                email="admin@naturebit.com",
-                password_hash=bcrypt.generate_password_hash("admin123").decode("utf-8"),
-                phone="01700000000",
-                is_admin=True
-            )
-            db.session.add(admin)
-            db.session.commit()
-            print("✅ Admin created: admin / admin123")
+    # ✅ admin auto-create (Vercel + Local দুটোতেই)
+    admin_user = User.query.filter_by(username="admin").first()
+    if not admin_user:
+        admin = User(
+            username="admin",
+            email="zinnatali356@gmail.com",
+            password_hash=bcrypt.generate_password_hash("admin123").decode("utf-8"),
+            phone="01760638656",
+            is_admin=True
+        )
+        db.session.add(admin)
+        db.session.commit()
+        print("✅ Admin created: admin / admin123")
 
 # ---------------------------
 # ✅ Helpers (must be before routes)
