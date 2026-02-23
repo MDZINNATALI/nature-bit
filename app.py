@@ -11,6 +11,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 import time
+from werkzeug.utils import secure_filename
 
 # এক্সটেনশন এবং মডেল ইম্পোর্ট
 from extensions import db, bcrypt, login_manager
@@ -76,12 +77,19 @@ def generate_sale_number():
     return 'OFS' + ''.join(random.choices(string.digits, k=8))
 
 def save_plant_image(file):
-    if file:
-        filename = f"plant_{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}"
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        return filename
-    return None
+    if not file or file.filename == '':
+        return None
+
+    # filename safe করো (Linux/Vercel friendly)
+    safe_name = secure_filename(file.filename)
+
+    # extension বের করে unique নাম দাও
+    ext = os.path.splitext(safe_name)[1].lower()  # .jpg .png etc
+    filename = f"plant_{int(time.time())}_{''.join(random.choices(string.ascii_lowercase+string.digits, k=6))}{ext}"
+
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
+    return filename
 
 @app.context_processor
 def cart_count():
@@ -114,6 +122,7 @@ with app.app_context():
         db.session.add(admin)
         db.session.commit()
         print("✅ Admin created: admin / admin123")
+
 
 # ========== হোম পেজ ==========
 @app.route('/')
@@ -409,7 +418,7 @@ def add_plant():
         return redirect(url_for('index'))
     
     if request.method == 'POST':
-        image = request.files['image']
+        image = request.files.get('image')  # ✅ safe
         filename = save_plant_image(image) if image else None
         
         plant = Plant(
@@ -428,13 +437,17 @@ def add_plant():
             pot_size=request.form.get('pot_size', ''),
             blooming_season=request.form.get('blooming_season', '')
         )
-        
-        db.session.add(plant)
-        db.session.commit()
-        flash('গাছ যোগ হয়েছে')
-        return redirect(url_for('admin_plants'))
+        try:
+            db.session.add(plant)
+            db.session.commit()
+            flash('গাছ যোগ হয়েছে')
+            
+        except Exception as e:
+            db.session.rollback()
+            print("add_plant error:", str(e))
+            flash('কিছু সমস্যা হয়েছে, আবার চেষ্টা করুন')
     
-    return render_template('admin/add_product.html')
+        return render_template('admin/add_product.html')
 
 @app.route('/admin/plants/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
