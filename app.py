@@ -12,7 +12,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 import time
 from werkzeug.utils import secure_filename
-
+import secrets
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin
 from flask_bcrypt import Bcrypt
@@ -20,6 +20,8 @@ from extensions import db, bcrypt, login_manager
 from models import User, Plant, Cart, Order, OrderItem, OfflineSale, OfflineSaleItem, ContactMessage
 
 app = Flask(__name__)
+# ✅ SECRET_KEY must (flash/session/login এর জন্য)
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", secrets.token_hex(32))
 
 # ✅ Detect Vercel
 is_vercel = (os.getenv("VERCEL") is not None) or (os.getenv("VERCEL_ENV") is not None)
