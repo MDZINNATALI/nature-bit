@@ -418,13 +418,13 @@ def add_plant():
         return redirect(url_for('index'))
     
     if request.method == 'POST':
-        print("📝 ফর্ম সাবমিট হয়েছে!")  # ডিবাগ লাইন
-        print(f"নাম: {request.form.get('name')}")
-        print(f"মূল্য: {request.form.get('price')}")
-        
         try:
             image = request.files['image']
             filename = save_plant_image(image) if image else None
+            
+            # ✅ old_price খালি থাকলে 0 সেট করুন
+            old_price_str = request.form.get('old_price', '')
+            old_price = float(old_price_str) if old_price_str else 0
             
             plant = Plant(
                 name=request.form['name'],
@@ -432,7 +432,7 @@ def add_plant():
                 category=request.form['category'],
                 description=request.form['description'],
                 price=float(request.form['price']),
-                old_price=float(request.form.get('old_price', 0)),
+                old_price=old_price,  # ✅ ফিক্সড
                 stock=int(request.form['stock']),
                 image=filename,
                 featured='featured' in request.form,
@@ -449,8 +449,8 @@ def add_plant():
             return redirect(url_for('admin_plants'))
             
         except Exception as e:
-            print(f"❌ Error: {e}")
-            flash('গাছ যোগ করতে সমস্যা হয়েছে')
+            print(f"Error: {e}")
+            flash(f'গাছ যোগ করতে সমস্যা: {str(e)}')
             return redirect(url_for('add_plant'))
     
     return render_template('admin/add_product.html')
