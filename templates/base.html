@@ -85,11 +85,50 @@
         }
         
         .footer {
-            background: white;
+            background: linear-gradient(135deg, #1e3c2f, #2f5d46);
+            color: white;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
             text-align: center;
-            padding: 2rem;
-            margin-top: 3rem;
+            position: relative;
+            overflow: hidden;
         }
+
+        /* subtle top border glow */
+        .footer::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 4px;
+            width: 100%;
+            background: linear-gradient(to right, #7CFC00, #00ffcc);
+        }
+
+        /* footer text */
+        .footer p {
+            margin: 0.5rem 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* links */
+        .footer a {
+            color: #7CFC00;
+            text-decoration: none;
+            font-weight: 500;
+            transition: 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: white;
+            letter-spacing: 1px;
+        }
+
+        /* smooth shadow */
+        .footer {
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.2);    
+        }   
         
         @media (max-width: 768px) {
             .nav-container {
@@ -147,6 +186,7 @@
     
     <footer class="footer">
         <p>&copy; ২০২৬ Nature Bit নার্সারি। সমস্ত অধিকার সংরক্ষিত।</p>
+        <p>Cactus Develover!</p>
     </footer>
     
     {% block extra_js %}{% endblock %}
