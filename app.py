@@ -13,126 +13,127 @@ from reportlab.lib.units import inch
 import time
 from werkzeug.utils import secure_filename
 
-# এক্সটেনশন এবং মডেল ইম্পোর্ট
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin
+from flask_bcrypt import Bcrypt
 from extensions import db, bcrypt, login_manager
 from models import User, Plant, Cart, Order, OrderItem, OfflineSale, OfflineSaleItem, ContactMessage
 
-# -----------------------------
-# ✅ Vercel read-only FS FIX
-# -----------------------------
-# Vercel এনভায়রনমেন্ট চেক
-is_vercel = os.environ.get("VERCEL") == "1" or os.environ.get("VERCEL_ENV") is not None
+app = Flask(__name__)
 
-# ✅ instance_path /tmp এ দাও, না হলে /var/task/instance বানাতে গিয়ে crash করবে
-app = Flask(__name__, instance_path="/tmp/instance")
-os.makedirs(app.instance_path, exist_ok=True)
+# ✅ Detect Vercel
+is_vercel = (os.getenv("VERCEL") is not None) or (os.getenv("VERCEL_ENV") is not None)
 
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nature-bit-secret-key-2026')
-
-# -----------------------------
-# ✅ Database (SQLite /tmp)
-# -----------------------------
-# ডাটাবেস URI - SQLite ব্যবহার করুন
+# ✅ Database config
+# ---------------------------
 if is_vercel:
-    # Vercel-এ tmp ফোল্ডারে SQLite
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tmp/nature_bit.db'
+    db_url = os.environ.get("DATABASE_URL")
+
+    # ✅ যদি Postgres না থাকে → SQLite fallback (/tmp only)
+    if not db_url:
+        os.makedirs("/tmp", exist_ok=True)  # ✅ এখানে দরকার
+        db_url = "sqlite:////tmp/nature_bit.db"
+
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 else:
-    # লোকালে স্বাভাবিক
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///nature_bit.db'
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///nature_bit.db"
 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# -----------------------------
-# ✅ Upload/Report folders
-# -----------------------------
-if is_vercel:
-    UPLOAD_FOLDER = '/tmp/uploads'
-    REPORT_FOLDER = '/tmp/reports'
-else:
-    UPLOAD_FOLDER = 'static/uploads'
-    REPORT_FOLDER = 'static/reports'
-
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(REPORT_FOLDER, exist_ok=True)
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['REPORT_FOLDER'] = REPORT_FOLDER
-
-# এক্সটেনশনগুলো app-এর সাথে রেজিস্টার করুন
+# ---------------------------
+# ✅ Init extensions (সবচেয়ে important)
+# ---------------------------
 db.init_app(app)
 bcrypt.init_app(app)
 login_manager.init_app(app)
-login_manager.login_view = 'login'
-login_manager.login_message = 'অর্ডার করতে লগইন করুন'
 
-@login_manager.user_loader
-def load_user(user_id):
-    return db.session.get(User, int(user_id))
-
-def generate_order_number():
-    return 'NBF' + ''.join(random.choices(string.digits, k=8))
-
-def generate_sale_number():
-    return 'OFS' + ''.join(random.choices(string.digits, k=8))
-
-def save_plant_image(file):
-    if not file or file.filename == '':
-        return None
-
-    # filename safe করো (Linux/Vercel friendly)
-    safe_name = secure_filename(file.filename)
-
-    # extension বের করে unique নাম দাও
-    ext = os.path.splitext(safe_name)[1].lower()  # .jpg .png etc
-    filename = f"plant_{int(time.time())}_{''.join(random.choices(string.ascii_lowercase+string.digits, k=6))}{ext}"
-
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(filepath)
-    return filename
-
-@app.context_processor
-def cart_count():
-    if current_user.is_authenticated:
-        count = Cart.query.filter_by(user_id=current_user.id).count()
-        total = sum(item.plant.price * item.quantity for item in current_user.cart_items)
-        return {'cart_count': count, 'cart_total': total}
-    return {'cart_count': 0, 'cart_total': 0}
-
-@app.context_processor
-def utility_processor():
-    return {'now': datetime.now, 'timedelta': timedelta}
-
-# -----------------------------
-# ✅ (Optional কিন্তু recommended) cold start এ টেবিল বানাবে
-# -----------------------------
+# ---------------------------
+# ✅ Create tables (app_context এর ভিতর)
+# ---------------------------
 with app.app_context():
     db.create_all()
 
-    # ✅ Vercel এও admin বানাও (না থাকলে)
-    admin_user = User.query.filter_by(username='admin').first()
-    if not admin_user:
-        admin = User(
-            username='admin',
-            email='admin@naturebit.com',
-            password_hash=bcrypt.generate_password_hash('admin123').decode('utf-8'),
-            phone='01700000000',
-            is_admin=True
-        )
-        db.session.add(admin)
-        db.session.commit()
-        print("✅ Admin created: admin / admin123")
+    # ✅ Optional: admin auto-create (LOCAL এ রাখাই ভালো)
+    if not is_vercel:
+        admin_user = User.query.filter_by(username="admin").first()
+        if not admin_user:
+            admin = User(
+                username="admin",
+                email="admin@naturebit.com",
+                password_hash=bcrypt.generate_password_hash("admin123").decode("utf-8"),
+                phone="01700000000",
+                is_admin=True
+            )
+            db.session.add(admin)
+            db.session.commit()
+            print("✅ Admin created: admin / admin123")
+
+# ---------------------------
+# ✅ Helpers (must be before routes)
+# ---------------------------
+
+def generate_order_number():
+    # উদাহরণ: ORD-20260223-8K3P1Z
+    date_part = datetime.now().strftime("%Y%m%d")
+    rand_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    return f"ORD-{date_part}-{rand_part}"
 
 
-# ========== হোম পেজ ==========
-@app.route('/')
+def generate_sale_number():
+    # উদাহরণ: SALE-20260223-5QX2A9
+    date_part = datetime.now().strftime("%Y%m%d")
+    rand_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    return f"SALE-{date_part}-{rand_part}"
+
+
+def save_plant_image(image_file):
+    """
+    Upload folder এ image save করবে।
+    Vercel এ filesystem read-only, শুধু /tmp writable, তাই Vercel এ /tmp ব্যবহার করা হবে।
+    """
+    if not image_file or image_file.filename == "":
+        return None
+
+    filename = secure_filename(image_file.filename)
+    ext = os.path.splitext(filename)[1].lower()
+    allowed = {".png", ".jpg", ".jpeg", ".webp"}
+
+    if ext not in allowed:
+        raise ValueError("Only png/jpg/jpeg/webp allowed")
+
+    # unique নাম
+    unique = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+    filename = f"plant_{int(time.time())}_{unique}{ext}"
+
+    # Vercel হলে /tmp, না হলে local uploads folder
+    base_dir = "/tmp/uploads" if is_vercel else os.path.join(app.root_path, "static", "uploads")
+    os.makedirs(base_dir, exist_ok=True)
+
+    save_path = os.path.join(base_dir, filename)
+    image_file.save(save_path)
+
+    # template এ দেখানোর জন্য static path return করা ভালো (local এ)
+    # কিন্তু Vercel এ /tmp ফাইল public হবে না (এটা limitation) — prod এ image CDN/Cloudinary দরকার
+    return filename
+
+# Local static uploads folder (templates will use /static/uploads/<filename>)
+app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads")
+
+@app.route("/")
 def index():
     featured_plants = Plant.query.filter_by(featured=True).limit(12).all()
     new_plants = Plant.query.order_by(Plant.created_at.desc()).limit(12).all()
     categories = db.session.query(Plant.category).distinct().all()
-    return render_template('index.html', 
-                         featured_plants=featured_plants,
-                         new_plants=new_plants,
-                         categories=categories)
+    return render_template(
+        "index.html",
+        featured_plants=featured_plants,
+        new_plants=new_plants,
+        categories=categories
+    )
+
 
 # ========== গাছের ক্যাটালগ ==========
 @app.route('/plants')
@@ -763,19 +764,19 @@ def contact():
     
     return render_template('contact.html')
 
-# ========== মেইন ==========
-if __name__ == '__main__':
+# ========== মেইন (Local only) ==========
+if __name__ == "__main__":
     with app.app_context():
         db.create_all()
 
-        # লোকাল এ seed data (শুধু লোকালে)
+        # শুধু লোকাল এ seed
         if not is_vercel:
-            if not User.query.filter_by(username='admin').first():
+            if not User.query.filter_by(username="admin").first():
                 admin = User(
-                    username='admin',
-                    email='admin@naturebit.com',
-                    password_hash=bcrypt.generate_password_hash('admin123').decode('utf-8'),
-                    phone='01700000000',
+                    username="admin",
+                    email="admin@naturebit.com",
+                    password_hash=bcrypt.generate_password_hash("admin123").decode("utf-8"),
+                    phone="01700000000",
                     is_admin=True
                 )
                 db.session.add(admin)
@@ -785,44 +786,45 @@ if __name__ == '__main__':
             if Plant.query.count() == 0:
                 plants = [
                     Plant(
-                        name='মনি প্ল্যান্ট',
-                        scientific_name='Epipremnum aureum',
-                        category='ইনডোর',
-                        description='বাতাস বিশুদ্ধকারী, সহজে বাঁচে',
+                        name="মনি প্ল্যান্ট",
+                        scientific_name="Epipremnum aureum",
+                        category="ইনডোর",
+                        description="বাতাস বিশুদ্ধকারী, সহজে বাঁচে",
                         price=350,
                         old_price=450,
                         stock=15,
-                        light_requirement='আংশিক ছায়া',
-                        water_requirement='মাঝারি',
-                        height='২-৩ ফুট',
+                        light_requirement="আংশিক ছায়া",
+                        water_requirement="মাঝারি",
+                        height="২-৩ ফুট",
                         featured=True
                     ),
                     Plant(
-                        name='গোলাপ',
-                        scientific_name='Rosa',
-                        category='ফুল',
-                        description='সুগন্ধি ফুল, বাগানের রানী',
+                        name="গোলাপ",
+                        scientific_name="Rosa",
+                        category="ফুল",
+                        description="সুগন্ধি ফুল, বাগানের রানী",
                         price=250,
                         stock=10,
-                        light_requirement='পূর্ণ সূর্য',
-                        water_requirement='নিয়মিত',
-                        blooming_season='বসন্ত-শরৎ',
+                        light_requirement="পূর্ণ সূর্য",
+                        water_requirement="নিয়মিত",
+                        blooming_season="বসন্ত-শরৎ",
                         featured=True
                     ),
                     Plant(
-                        name='অ্যালোভেরা',
-                        scientific_name='Aloe vera',
-                        category='ঔষধি',
-                        description='ত্বকের যত্নে, রসে ভরপুর',
+                        name="অ্যালোভেরা",
+                        scientific_name="Aloe vera",
+                        category="ঔষধি",
+                        description="ত্বকের যত্নে, রসে ভরপুর",
                         price=180,
                         stock=20,
-                        light_requirement='পূর্ণ সূর্য',
-                        water_requirement='কম',
+                        light_requirement="পূর্ণ সূর্য",
+                        water_requirement="কম",
                         featured=True
-                    )
+                    ),
                 ]
                 db.session.add_all(plants)
                 db.session.commit()
                 print("✅ স্যাম্পল গাছ যোগ হয়েছে")
 
-    app.run(debug=True)
+    # ✅ local server run only
+    app.run(host="0.0.0.0", port=5000, debug=True)
