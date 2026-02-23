@@ -34,15 +34,12 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nature-bit-secret-key-2
 # ✅ Database (SQLite /tmp)
 # -----------------------------
 if is_vercel:
-    # ✅ ৪টা slash: sqlite:////tmp/...
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-        "DATABASE_URL",
-        "sqlite:////tmp/nature_bit.db"
-    )
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        raise RuntimeError("DATABASE_URL is not set in Vercel Environment Variables")
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///nature_bit.db"
-
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///nature_bit.db"
 
 # -----------------------------
 # ✅ Upload/Report folders
