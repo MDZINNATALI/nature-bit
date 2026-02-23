@@ -65,6 +65,19 @@ with app.app_context():
         db.session.commit()
         print("✅ Admin created: admin / admin123")
 
+from flask_login import current_user
+
+@app.context_processor
+def inject_cart_count():
+    try:
+        if current_user.is_authenticated:
+            cart_count = Cart.query.filter_by(user_id=current_user.id).count()
+        else:
+            cart_count = 0
+    except Exception:
+        cart_count = 0
+    return dict(cart_count=cart_count)
+
 # ---------------------------
 # ✅ Helpers (must be before routes)
 # ---------------------------
