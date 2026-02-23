@@ -49,6 +49,9 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 bcrypt.init_app(app)
 login_manager.init_app(app)
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # ---------------------------
 # ✅ Create tables (app_context এর ভিতর)
@@ -121,6 +124,8 @@ def save_plant_image(image_file):
 
 # Local static uploads folder (templates will use /static/uploads/<filename>)
 app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads")
+
+
 
 @app.route("/")
 def index():
